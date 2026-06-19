@@ -371,7 +371,7 @@ auto it_last = std::find_if(container.rbegin(), container.rend(),
 
 ## 时间复杂度
 
-|操作类型|操作|时间复杂度|说明|
+|操作类型|操作|复杂度|说明|
 |-|-|-|-|
 |访问||||
 ||`operator[]`|$$O(log B)$$|$$B = 块数 ≈ N / MAX$$|
@@ -401,6 +401,14 @@ auto it_last = std::find_if(container.rbegin(), container.rend(),
 ||`empty()`|$$O(1)$$||
 ||`clear()`|$$O(N)$$|$$N = 元素总数$$|
 ||`shrink_to_fit()`|$$O(N)$$|遍历所有页并压缩|
+
+## 空间复杂度
+|项目|复杂度|说明|
+|-|-|-|
+|元素存储|$$O(N)$$|实际有效元素|
+|空闲槽位|$$O(N)$$|最坏情况全部删除|
+|索引结构|$$O(N)$$|块级、页级索引，线性|
+|总体|$$O(N)$$|线性空间占用|
 
 ## 性能测试
 ### 测试硬件：U9-275HX、DDR5-5600MT/s
