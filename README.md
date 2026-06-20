@@ -413,6 +413,7 @@ auto it_last = std::find_if(container.rbegin(), container.rend(),
 ## 性能测试
 ### 测试硬件：U9-275HX、DDR5-5600MT/s
 ### 测试系统：Windows11-25H2-26200.8655
+### 编译器：MSVC 14.51，VS2026默认编译设置
 
 ### 元素追加测试
 - 128字节每元素追加1200万次，重复测试50次，统一调用`emplace_back`，之后还有64字节、32字节、16字节的1200万次追加，详见excel表(无比对)，这里仅展示128字节的比对
