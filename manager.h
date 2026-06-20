@@ -8,7 +8,6 @@
 #include <algorithm>
 #include <limits>
 #include <random>
-#include <scoped_allocator>
 
 template<typename T,typename U>
 struct element
@@ -18,7 +17,7 @@ struct element
 	U last;
 	U next;
 	template<typename...params>
-	constexpr element(U last_val, U next_val, params&&...src_val) noexcept :
+	constexpr element(U last_val, U next_val, params&&...src_val) noexcept(std::is_nothrow_constructible_v<T, params...>) :
 		src(std::forward<params>(src_val)...), last(last_val), next(next_val)
 	{
 
@@ -2089,8 +2088,8 @@ private:
 	std::vector<index_manager_block, allocator_manager_free> free;
 	cache_mapping<std::size_t, index_manager_block, std::numeric_limits<index_manager_block>::max() - 1, allocator_manager_cache> cache;
 	cache_prefix_mapping<index_manager_block, std::size_t, allocator_manager> cache_locate;
-	std::size_t block_size;
-	std::size_t element_size;
+	std::size_t block_size = 0;
+	std::size_t element_size = 0;
 private:
 	constexpr bool test_validity_order(std::size_t order) const noexcept
 	{
@@ -2831,7 +2830,7 @@ private:
 	}
 public:
 	manager() :
-		set(), free(), cache(), cache_locate(), block_size(0), element_size(0)
+		manager(allocator_manager())
 	{
 
 	}
