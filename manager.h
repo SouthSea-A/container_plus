@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 #include <vector>
 #include <tuple>
 #include <optional>
@@ -8,6 +8,7 @@
 #include <algorithm>
 #include <limits>
 #include <random>
+#include <scoped_allocator>
 
 template<typename T,typename U>
 struct element
@@ -2081,7 +2082,9 @@ private:
 	using allocator_manager_set = typename std::allocator_traits<allocator_manager>::template rebind_alloc<std::optional<element<manager_block<T, MAX, allocator_manager>, index_manager_block>>>;
 	using allocator_manager_free = typename std::allocator_traits<allocator_manager>::template rebind_alloc<index_manager_block>;
 	using allocator_manager_cache = typename std::allocator_traits<allocator_manager>::template rebind_alloc<index_manager_block>;
+
 private:
+	allocator_manager allocator_;
 	std::vector<std::optional<element<manager_block<T, MAX, allocator_manager>, index_manager_block>>, allocator_manager_set> set;
 	std::vector<index_manager_block, allocator_manager_free> free;
 	cache_mapping<std::size_t, index_manager_block, std::numeric_limits<index_manager_block>::max() - 1, allocator_manager_cache> cache;
@@ -2127,7 +2130,7 @@ private:
 		{
 			index_new = static_cast<index_manager_block>(this->set.size());
 
-			this->set.emplace_back(std::in_place, index_last, INDEX_MANAGER_BLOCK_END, page<T, MAX / 2, allocator_manager>(), std::nullopt);
+			this->set.emplace_back(std::in_place, index_last, INDEX_MANAGER_BLOCK_END, page<T, MAX / 2, allocator_manager>(this->allocator_), std::nullopt);
 		}
 		else
 		{
@@ -2141,7 +2144,7 @@ private:
 				return std::unexpected(block_free.error());
 			}
 
-			block_free.value().get().emplace(index_last, INDEX_MANAGER_BLOCK_END, page<T, MAX / 2, allocator_manager>(), std::nullopt);
+			block_free.value().get().emplace(index_last, INDEX_MANAGER_BLOCK_END, page<T, MAX / 2, allocator_manager>(this->allocator_), std::nullopt);
 		}
 
 		if (block_index_last.has_value() == true)
@@ -2179,7 +2182,7 @@ private:
 			index_new = static_cast<index_manager_block>(this->set.size());
 			block_insert_ref.last = index_new;
 
-			this->set.emplace_back(std::in_place, index_last, index_next, page<T, MAX / 2, allocator_manager>(), std::nullopt);
+			this->set.emplace_back(std::in_place, index_last, index_next, page<T, MAX / 2, allocator_manager>(this->allocator_), std::nullopt);
 		}
 		else
 		{
@@ -2195,7 +2198,7 @@ private:
 
 			block_insert_ref.last = index_new;
 
-			block_free.value().get().emplace(index_last, index_next, page<T, MAX / 2, allocator_manager>(), std::nullopt);
+			block_free.value().get().emplace(index_last, index_next, page<T, MAX / 2, allocator_manager>(this->allocator_), std::nullopt);
 		}
 
 		manager_result_ref<T, MAX, allocator_manager> block_insert_last = get_block_ref(index_last, false);
@@ -2231,7 +2234,7 @@ private:
 			index_new = static_cast<index_manager_block>(this->set.size());
 			block_insert_ref.next = index_new;
 
-			this->set.emplace_back(std::in_place, index_last, index_next, page<T, MAX / 2, allocator_manager>(), std::nullopt);
+			this->set.emplace_back(std::in_place, index_last, index_next, page<T, MAX / 2, allocator_manager>(this->allocator_), std::nullopt);
 		}
 		else
 		{
@@ -2247,7 +2250,7 @@ private:
 
 			block_insert_ref.next = index_new;
 
-			block_free.value().get().emplace(index_last, index_next, page<T, MAX / 2, allocator_manager>(), std::nullopt);
+			block_free.value().get().emplace(index_last, index_next, page<T, MAX / 2, allocator_manager>(this->allocator_), std::nullopt);
 		}
 
 		manager_result_ref<T, MAX, allocator_manager> block_insert_next = get_block_ref(index_next, false);
@@ -2313,7 +2316,7 @@ private:
 				return res_add.value();
 			}
 
-			block.second.emplace(page<T, MAX / 2, allocator_manager>());
+			block.second.emplace(page<T, MAX / 2, allocator_manager>(this->allocator_));
 
 			page_result_src<T> res_add = block.second.value().add(std::forward<params>(src_new)...);
 
@@ -2350,7 +2353,7 @@ private:
 					return std::unexpected(manager_error::block_invalid_left);
 
 				if (block.second.has_value() == false)
-					block.second.emplace(page<T, MAX / 2, allocator_manager>());
+					block.second.emplace(page<T, MAX / 2, allocator_manager>(this->allocator_));
 
 				page<T, MAX / 2, allocator_manager>& page_right = block.second.value();
 				index_page_order order_cut = static_cast<index_page_order>(page_left.get_size() - 1);
@@ -2425,7 +2428,7 @@ private:
 					return std::unexpected(manager_error::block_invalid_left);
 
 				if (block.second.has_value() == false)
-					block.second.emplace(page<T, MAX / 2, allocator_manager>());
+					block.second.emplace(page<T, MAX / 2, allocator_manager>(this->allocator_));
 
 				page<T, MAX / 2, allocator_manager>& page_right = block.second.value();
 				index_page_order order_cut = static_cast<index_page_order>(page_left.get_size() - 1);
@@ -2499,7 +2502,7 @@ private:
 					return std::unexpected(manager_error::block_invalid_left);
 
 				if (block.second.has_value() == false)
-					block.second.emplace(page<T, MAX / 2, allocator_manager>());
+					block.second.emplace(page<T, MAX / 2, allocator_manager>(this->allocator_));
 
 				page<T, MAX / 2, allocator_manager>& page_right = block.second.value();
 
@@ -2590,7 +2593,7 @@ private:
 					return std::unexpected(manager_error::block_invalid_left);
 
 				if (block.second.has_value() == false)
-					block.second.emplace(page<T, MAX / 2, allocator_manager>());
+					block.second.emplace(page<T, MAX / 2, allocator_manager>(this->allocator_));
 
 				page<T, MAX / 2, allocator_manager>& page_right = block.second.value();
 
@@ -2833,7 +2836,7 @@ public:
 
 	}
 	explicit manager(const allocator_manager& allocator_val) :
-		set(allocator_val), free(allocator_val), cache(allocator_val), cache_locate(allocator_val), block_size(0), element_size(0)
+		allocator_(allocator_val), set(allocator_val), free(allocator_val), cache(allocator_val), cache_locate(allocator_val), block_size(0), element_size(0)
 	{
 
 	}
@@ -3248,7 +3251,7 @@ public:
 
 		return at(0);
 	}
-	void shrink_to_fit() noexcept
+	void shrink_to_fit()
 	{
 		std::optional<index_manager_block> block_index_current = this->cache.get_front();
 		std::size_t index_current = 0;
